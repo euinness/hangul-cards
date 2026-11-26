@@ -8,6 +8,7 @@
   --vowel-soft: #D6EEFF;
   --merge: #8E5CF7;       /* 합쳐진 글자: 보라 */
   --merge-soft: #EDE4FF;
+  --family: #F2559B;      /* 가족(기타): 분홍 */
   --white: #FFFFFF;
   --font: "Jua", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
@@ -49,6 +50,7 @@ button {
 .app[data-tab="consonant"] { --main: var(--consonant); --soft: var(--consonant-soft); }
 .app[data-tab="vowel"]     { --main: var(--vowel);     --soft: var(--vowel-soft); }
 .app[data-tab="merge"]     { --main: var(--merge);     --soft: var(--merge-soft); }
+.app[data-tab="family"]    { --main: var(--family);    --soft: var(--merge-soft); }
 
 /* ===== 탭 ===== */
 .tabs {
@@ -63,10 +65,12 @@ button {
 .tab {
   flex: 1;
   min-height: 60px;
-  font-size: 24px;
+  font-size: 22px;
   border-radius: 16px;
   transition: background 0.2s, color 0.2s;
 }
+
+.tab[hidden] { display: none; }
 
 .tab.active {
   background: var(--main);
@@ -220,7 +224,25 @@ button {
 }
 
 .merge-word .emoji { font-size: min(24vw, 13dvh, 110px); }
-.merge-word .word .first { color: var(--merge); }
+.merge-word .word .first { color: var(--main); }
+
+/* 이모지 대신 들어가는 가족 사진 (작게, 두 장이면 나란히) */
+.merge-word .emoji.photos {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.merge-word .emoji.photos img {
+  height: min(26vw, 14dvh, 120px);
+  width: auto;
+  max-width: 40vw;
+  object-fit: contain;
+}
+
+/* 가족 탭에서는 테두리와 합쳐진 글자를 분홍색으로 */
+.app[data-tab="family"] .merge { border-color: var(--family); }
+.app[data-tab="family"] .piece.result { color: var(--family); }
 
 .merge > .hint {
   text-align: center;
@@ -259,11 +281,198 @@ button {
 .merge.no-anim *,
 .merge.no-anim { transition: none !important; }
 
-/* ===== 카드 번호 ===== */
+/* ===== 카드 번호 + ⚙️ 버튼 ===== */
+.counter-row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+}
+
 .counter {
   text-align: center;
   font-size: 22px;
   opacity: 0.6;
+}
+
+.settings-btn {
+  position: absolute;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+}
+
+.settings-btn[hidden] { display: none; }
+
+/* ===== 가족 카드 설정 화면 ===== */
+.settings {
+  position: fixed;
+  inset: 0;
+  background: rgba(61, 58, 75, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 10;
+}
+
+.settings[hidden] { display: none; }
+
+.settings-panel {
+  width: 100%;
+  max-width: 480px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: 28px 28px 0 0;
+  padding: 22px 16px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.settings-panel h2 {
+  font-size: 26px;
+  font-weight: normal;
+  text-align: center;
+}
+
+.settings-help, .warning {
+  font-size: 16px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.warning {
+  background: #FFE1E1;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.warning[hidden] { display: none; }
+
+.family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.family-row {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.row-top strong {
+  font-size: 24px;
+  font-weight: normal;
+}
+
+.row-split {
+  flex: 1;
+  font-size: 16px;
+  opacity: 0.6;
+}
+
+.row-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.thumb {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  background: var(--merge-soft);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.thumb-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 14px;
+}
+
+.add-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 2px dashed var(--family);
+  color: var(--family);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.add-photo input { display: none; }
+
+.small-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--family);
+  color: var(--white);
+  font-size: 17px;
+}
+
+.small-btn.danger {
+  background: none;
+  color: #C0392B;
+  font-size: 15px;
+}
+
+.add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.add-form input {
+  flex: 1;
+  min-height: 48px;
+  border: 2px solid #E5DCC8;
+  border-radius: 12px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 18px; /* 16px 이상이어야 아이폰이 화면을 확대하지 않아요 */
+  background: var(--white);
+}
+
+.done-btn {
+  min-height: 60px;
+  border-radius: 18px;
+  background: var(--family);
+  color: var(--white);
+  font-size: 24px;
 }
 
 /* ===== 이전 / 다음 버튼 ===== */
