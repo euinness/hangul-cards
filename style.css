@@ -281,6 +281,97 @@ button {
 .merge.no-anim *,
 .merge.no-anim { transition: none !important; }
 
+/* ===== 따라 쓰기 칸 ===== */
+input {
+  -webkit-user-select: text; /* 아이폰에서 글자를 칠 수 있게 */
+  user-select: text;
+}
+
+.type-row {
+  display: flex;
+  gap: 8px;
+  /* 처음에는 숨겨 두고 (자리는 그대로), 카드를 합치거나 뒤집은 뒤에 나타나요 */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s, visibility 0s 0.2s;
+}
+
+.type-row.ready {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  /* 낱말이 다 나타난 뒤에 보이도록 조금 기다렸다가 */
+  transition: opacity 0.3s ease var(--delay, 0.5s),
+              transform 0.3s ease var(--delay, 0.5s),
+              visibility 0s var(--delay, 0.5s);
+}
+
+#typeInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 58px;
+  border: 3px solid var(--main);
+  border-radius: 18px;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 26px;
+  text-align: center;
+  background: var(--white);
+  color: var(--ink);
+}
+
+#typeInput::placeholder {
+  font-size: 18px;
+  opacity: 0.5;
+}
+
+.type-btn {
+  min-width: 88px;
+  min-height: 58px;
+  border-radius: 18px;
+  background: var(--main);
+  color: var(--white);
+  font-size: 24px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+}
+
+.type-row.shake { animation: shake 0.4s; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* 정답 / 다시 해보기 말풍선 (카드 위쪽에 잠깐 나타남) */
+.stage { position: relative; }
+
+.type-result {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translate(-50%, -12px);
+  opacity: 0;
+  background: var(--white);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 24px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.type-result.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.type-result.good { color: #1E9E5A; }
+.type-result.bad  { color: #E0533D; }
+
 /* ===== 카드 번호 + ⚙️ 버튼 ===== */
 .counter-row {
   position: relative;

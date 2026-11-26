@@ -57,17 +57,27 @@
         <div class="merge-word">
           <span id="mergeEmoji" class="emoji">🎒</span>
           <span id="mergeWord" class="word">가방</span>
+          <span id="mergeNote" class="note"></span>
         </div>
         <span class="hint">눌러서 합쳐 보세요 👆</span>
       </button>
 
+      <!-- 따라 쓰기 결과 (정답! / 다시 한번 해볼까요?) -->
+      <div id="typeResult" class="type-result" aria-live="polite"></div>
     </main>
+
+    <!-- 따라 쓰기 칸: 누르면 휴대폰 키보드가 열려요 -->
+    <form id="typeForm" class="type-row" autocomplete="off">
+      <input id="typeInput" type="text" lang="ko" placeholder="낱말을 따라 써 보세요"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+      <button type="submit" class="type-btn">확인</button>
+    </form>
 
     <!-- 몇 번째 카드인지 -->
     <div class="counter-row">
       <p id="counter" class="counter">1 / 14</p>
       <!-- 가족 카드 설정 버튼 ([기타] 탭에서만 보여요) -->
-      <button id="settingsBtn" class="settings-btn" aria-label="가족 카드 설정" hidden>⚙️</button>
+      <button id="settingsBtn" class="settings-btn" aria-label="기타 카드 설정" hidden>⚙️</button>
     </div>
 
     <!-- 아래쪽: 이전 / 다음 버튼 -->
@@ -81,7 +91,8 @@
   <!-- 가족 카드 설정 화면 (사진과 낱말은 이 기기 안에만 저장돼요) -->
   <div id="settings" class="settings" hidden>
     <div class="settings-panel">
-      <h2>가족 카드 설정</h2>
+      <h2>기타 카드 설정</h2>
+      <p class="settings-help">각 카드의 <b>＋ 사진</b>을 눌러 사진이나 그림을 넣으면 이모지 대신 보여요.</p>
       <p class="settings-help">🔒 사진과 낱말은 <b>이 기기 안에만</b> 저장돼요. 인터넷에 올라가지 않아요.</p>
       <p id="storageWarning" class="warning" hidden>⚠️ 이 브라우저에서는 저장이 안 돼요. 홈 화면에 추가한 아이콘으로 열어 주세요.</p>
 

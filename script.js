@@ -36,15 +36,49 @@ const vowels = [
   { letter: "ㅣ", name: "이", word: "이불",   emoji: "🛏️" },
 ];
 
-// 가족 카드 ([기타] 탭) 처음 모습
-// 사진과 새 낱말은 ⚙️ 설정에서 넣고, "이 기기 안에만" 저장돼요 (인터넷에 올라가지 않아요)
-const defaultFamily = [
-  { word: "엄마",     emoji: "👩", photos: [] },
-  { word: "아빠",     emoji: "👨", photos: [] },
-  { word: "할머니",   emoji: "👵", photos: [] },
-  { word: "할아버지", emoji: "👴", photos: [] },
+// [기타] 탭 기본 카드 (자음+모음은 낱말 첫 글자에서 자동으로 나눠요)
+// 사진·그림과 새 낱말은 ⚙️ 설정에서 넣고, "이 기기 안에만" 저장돼요 (인터넷에 올라가지 않아요)
+const builtinFamily = [
+  // 가족
+  { word: "엄마",       emoji: "👩" },
+  { word: "아빠",       emoji: "👨" },
+  { word: "할머니",     emoji: "👵" },
+  { word: "할아버지",   emoji: "👴" },
+  // 좋아하는 친구들
+  { word: "뽀로로",     emoji: "🐧" },
+  { word: "까투리",     emoji: "🐦", note: "엄마까투리" },
+  { word: "쥬쥬",       emoji: "👸", note: "시크릿쥬쥬" },
+  { word: "로사",       emoji: "💃", note: "시크릿쥬쥬" },
+  { word: "콩순이",     emoji: "🫘" },
+  { word: "똘똘이",     emoji: "🐶" },
+  { word: "베베핀",     emoji: "👶" },
+  { word: "넘버블럭스", emoji: "🔢" },
+  // 주변 낱말
+  { word: "공항",       emoji: "✈️" },
+  { word: "산타",       emoji: "🎅" },
+  { word: "크리스마스", emoji: "🎁" },
+  { word: "드레스",     emoji: "👗" },
+  { word: "거품",       emoji: "🫧" },
+  { word: "시계",       emoji: "⏰" },
+  { word: "노트북",     emoji: "💻" },
+  { word: "휴대폰",     emoji: "📱" },
+  { word: "트리",       emoji: "🎄" },
+  { word: "수영장",     emoji: "🏊" },
 ];
-let familyCards = defaultFamily;
+
+// 이 기기에 저장되는 것: 낱말별 사진, 직접 추가한 낱말, 지운 기본 카드
+let familyData = { photos: {}, custom: [], hidden: [] };
+
+// 지금 보여줄 [기타] 카드 목록 만들기
+function getFamilyCards() {
+  const builtins = builtinFamily
+    .filter((card) => !familyData.hidden.includes(card.word))
+    .map((card) => ({ ...card, builtin: true }));
+  return [...builtins, ...familyData.custom].map((card) => ({
+    ...card,
+    photos: familyData.photos[card.word] || [],
+  }));
+}
 
 // 낱말 첫 글자를 자음과 모음으로 나누기  예) 엄마 → ㅇ + ㅓ = 어
 const CHO  = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
@@ -67,7 +101,7 @@ function getDeck(tab) {
   if (tab === "consonant") return consonants;
   if (tab === "vowel") return vowels;
   if (tab === "merge") return consonants;
-  return familyCards.map((card) => ({ ...splitFirst(card.word), ...card }));
+  return getFamilyCards().map((card) => ({ ...splitFirst(card.word), ...card }));
 }
 
 // 합치기 화면을 쓰는 탭
@@ -142,6 +176,9 @@ function render() {
     btn.classList.toggle("active", btn.dataset.tab === currentTab);
   });
   settingsBtn.hidden = currentTab !== "family";
+  clearTyping(); // 카드가 바뀌면 따라 쓰기 칸 비우고 숨기기
+  typeInput.blur();
+  typeForm.classList.remove("ready");
 
   if (!item) {
     // 가족 카드를 모두 지운 경우
@@ -151,6 +188,7 @@ function render() {
     ["mergeC", "mergeV", "mergeResult"].forEach((id) => (document.getElementById(id).textContent = ""));
     document.getElementById("mergeEmoji").textContent = "⚙️";
     document.getElementById("mergeWord").textContent = "카드를 추가해 주세요";
+    document.getElementById("mergeNote").textContent = "";
     mergeCard.classList.add("merged");
     counter.textContent = "0 / 0";
     return;
@@ -166,6 +204,7 @@ function render() {
     document.getElementById("mergeResult").textContent = item.syllable;
     setPicture(document.getElementById("mergeEmoji"), item);
     setWord(document.getElementById("mergeWord"), item.word);
+    document.getElementById("mergeNote").textContent = item.note || "";
   } else {
     mergeCard.hidden = true;
     flipCard.hidden = false;
@@ -197,11 +236,14 @@ tabButtons.forEach((btn) => {
 // 카드 누르기 → 뒤집기
 flipCard.addEventListener("click", () => {
   flipCard.classList.toggle("flipped");
+  updateTyping();
 });
 
 // 합치기 카드 누르기 → 합치기 / 다시 처음으로
 mergeCard.addEventListener("click", () => {
+  if (!getDeck(currentTab)[currentIndex]) return; // 카드가 하나도 없을 때
   mergeCard.classList.toggle("merged");
+  updateTyping();
 });
 
 // 이전 / 다음 (끝에서 넘기면 처음으로 돌아가요)
@@ -218,11 +260,89 @@ document.getElementById("nextBtn").addEventListener("click", () => move(1));
 // 컴퓨터에서 확인할 때: 왼쪽/오른쪽 화살표 키, 스페이스 키
 document.addEventListener("keydown", (event) => {
   if (!settings.hidden) return; // 설정 화면에서 글자를 칠 때는 무시
+  if (event.target === typeInput) return; // 따라 쓰기 칸에 글자를 칠 때도 무시
   if (event.key === "ArrowLeft") move(-1);
   if (event.key === "ArrowRight") move(1);
   if (event.key === " ") {
     event.preventDefault();
     (mergeTabs.includes(currentTab) ? mergeCard : flipCard).click();
+  }
+});
+
+// =============================================
+// 6-1. 따라 쓰기: 맞았는지 확인하고 소리로 알려주기
+// =============================================
+const typeForm   = document.getElementById("typeForm");
+const typeInput  = document.getElementById("typeInput");
+const typeResult = document.getElementById("typeResult");
+let resultTimer;
+
+// 기기에 들어 있는 한국어 목소리로 읽어주기 (인터넷 필요 없음)
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const voice = new SpeechSynthesisUtterance(text);
+  voice.lang = "ko-KR";
+  voice.rate = 0.9;  // 조금 천천히
+  voice.pitch = 1.1; // 조금 밝게
+  speechSynthesis.speak(voice);
+}
+
+function showResult(message, kind) {
+  clearTimeout(resultTimer);
+  typeResult.textContent = message;
+  typeResult.className = `type-result ${kind} show`;
+  resultTimer = setTimeout(() => typeResult.classList.remove("show"), 2500);
+}
+
+let nextTimer;
+
+function clearTyping() {
+  typeInput.value = "";
+  clearTimeout(resultTimer);
+  clearTimeout(nextTimer);
+  typeResult.classList.remove("show");
+}
+
+// 카드를 합치거나 뒤집어서 낱말이 보일 때만 따라 쓰기 칸 보여주기
+function updateTyping() {
+  const isMerge = mergeTabs.includes(currentTab);
+  const open = isMerge ? mergeCard.classList.contains("merged") : flipCard.classList.contains("flipped");
+  const hasCard = Boolean(getDeck(currentTab)[currentIndex]);
+  typeForm.style.setProperty("--delay", isMerge ? "1.3s" : "0.5s"); // 합치기는 낱말이 늦게 나와요
+  typeForm.classList.toggle("ready", open && hasCard);
+  if (!open) {
+    typeInput.blur();
+    clearTyping();
+  }
+}
+
+typeForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const item = getDeck(currentTab)[currentIndex];
+  if (!item) return;
+  const typed = typeInput.value.trim().normalize("NFC");
+
+  if (!typed) {
+    showResult("✏️ 낱말을 써 볼까요?", "bad");
+    speak("낱말을 써 볼까요?");
+    typeInput.focus();
+    return;
+  }
+
+  if (typed === item.word) {
+    showResult("🎉 정답! 잘했어요!", "good");
+    speak(`정답! ${item.word}! 잘했어요!`);
+    typeInput.blur(); // 키보드 닫기
+    // 칭찬을 듣고 나서 다음 카드로 넘어가기
+    nextTimer = setTimeout(() => move(1), 2200);
+  } else {
+    showResult("🤔 다시 한번 해볼까요?", "bad");
+    speak("다시 한번 해볼까요?");
+    typeForm.classList.remove("shake");
+    void typeForm.offsetWidth; // 흔들기 효과를 다시 시작하게
+    typeForm.classList.add("shake");
+    typeInput.select();
   }
 });
 
@@ -242,15 +362,41 @@ function openDB() {
   });
 }
 
+function readKey(db, key) {
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(STORE).objectStore(STORE).get(key);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// 예전 방식("cards" 목록)으로 저장된 사진을 새 방식으로 옮기기
+const oldDefaultWords = ["엄마", "아빠", "할머니", "할아버지"];
+function convertOldCards(cards) {
+  const data = { photos: {}, custom: [], hidden: [] };
+  const builtinWords = builtinFamily.map((card) => card.word);
+  cards.forEach((card) => {
+    if (card.photos && card.photos.length) data.photos[card.word] = card.photos;
+    if (!builtinWords.includes(card.word)) data.custom.push({ word: card.word, emoji: card.emoji || "🙂" });
+  });
+  const kept = cards.map((card) => card.word);
+  data.hidden = oldDefaultWords.filter((word) => !kept.includes(word));
+  return data;
+}
+
 async function loadFamily() {
   try {
     const db = await openDB();
-    const saved = await new Promise((resolve, reject) => {
-      const request = db.transaction(STORE).objectStore(STORE).get("cards");
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    if (Array.isArray(saved)) familyCards = saved;
+    const saved = await readKey(db, "data");
+    if (saved) {
+      familyData = { photos: {}, custom: [], hidden: [], ...saved };
+    } else {
+      const oldCards = await readKey(db, "cards");
+      if (Array.isArray(oldCards)) {
+        familyData = convertOldCards(oldCards);
+        await saveFamily();
+      }
+    }
   } catch (error) {
     storageWorks = false;
   }
@@ -261,7 +407,7 @@ async function saveFamily() {
     const db = await openDB();
     await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
-      tx.objectStore(STORE).put(familyCards, "cards");
+      tx.objectStore(STORE).put(familyData, "data");
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
@@ -306,7 +452,21 @@ const storageWarning = document.getElementById("storageWarning");
 
 function renderSettings() {
   familyList.innerHTML = "";
-  familyCards.forEach((card, cardIndex) => {
+
+  // 지운 기본 카드가 있으면 되돌리기 버튼
+  if (familyData.hidden.length) {
+    const restore = document.createElement("button");
+    restore.className = "small-btn";
+    restore.textContent = `지운 기본 카드 되돌리기 (${familyData.hidden.length}개)`;
+    restore.addEventListener("click", async () => {
+      familyData.hidden = [];
+      await saveFamily();
+      renderSettings();
+    });
+    familyList.append(restore);
+  }
+
+  getFamilyCards().forEach((card) => {
     const parts = splitFirst(card.word);
     const row = document.createElement("div");
     row.className = "family-row";
@@ -324,7 +484,12 @@ function renderSettings() {
     delCard.textContent = "카드 지우기";
     delCard.addEventListener("click", async () => {
       if (!confirm(`'${card.word}' 카드를 지울까요?`)) return;
-      familyCards.splice(cardIndex, 1);
+      if (card.builtin) {
+        familyData.hidden.push(card.word); // 기본 카드는 숨기기 (나중에 되돌릴 수 있어요)
+      } else {
+        familyData.custom = familyData.custom.filter((c) => c.word !== card.word);
+        delete familyData.photos[card.word];
+      }
       await saveFamily();
       renderSettings();
     });
@@ -341,7 +506,7 @@ function renderSettings() {
       remove.textContent = "✕";
       remove.setAttribute("aria-label", "사진 지우기");
       remove.addEventListener("click", async () => {
-        card.photos.splice(photoIndex, 1);
+        familyData.photos[card.word] = card.photos.filter((_, i) => i !== photoIndex);
         await saveFamily();
         renderSettings();
       });
@@ -359,7 +524,7 @@ function renderSettings() {
     input.addEventListener("change", async () => {
       for (const file of input.files) {
         const small = await shrinkImage(file);
-        if (small) card.photos = [...(card.photos || []), small];
+        if (small) familyData.photos[card.word] = [...(familyData.photos[card.word] || []), small];
       }
       await saveFamily();
       renderSettings();
@@ -392,7 +557,16 @@ addForm.addEventListener("submit", async (event) => {
     alert("한글 낱말로 써 주세요. 예: 이모");
     return;
   }
-  familyCards.push({ word, emoji: "🙂", photos: [] });
+  if (getFamilyCards().some((card) => card.word === word)) {
+    alert(`'${word}' 카드는 이미 있어요.`);
+    return;
+  }
+  const builtin = builtinFamily.find((card) => card.word === word);
+  if (builtin) {
+    familyData.hidden = familyData.hidden.filter((w) => w !== word); // 지운 기본 카드면 되살리기
+  } else {
+    familyData.custom.push({ word, emoji: "🙂" });
+  }
   newWord.value = "";
   await saveFamily();
   renderSettings();
