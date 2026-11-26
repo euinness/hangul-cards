@@ -1,0 +1,289 @@
+/* ===== 색깔 모음 (여기 값만 바꾸면 전체 색이 바뀌어요) ===== */
+:root {
+  --bg: #FFF8E7;          /* 바탕: 크림색 */
+  --ink: #3D3A4B;         /* 글자: 진한 회색 */
+  --consonant: #FF8A3D;   /* 자음: 주황 */
+  --consonant-soft: #FFE3CF;
+  --vowel: #2FA4F0;       /* 모음: 하늘 */
+  --vowel-soft: #D6EEFF;
+  --merge: #8E5CF7;       /* 합쳐진 글자: 보라 */
+  --merge-soft: #EDE4FF;
+  --white: #FFFFFF;
+  --font: "Jua", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent; /* 휴대폰에서 누를 때 회색 번쩍임 없애기 */
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* ===== 전체 화면 배치: 위(탭) - 가운데(카드) - 아래(버튼) ===== */
+.app {
+  height: 100vh;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 탭마다 쓸 색 정하기 */
+.app[data-tab="consonant"] { --main: var(--consonant); --soft: var(--consonant-soft); }
+.app[data-tab="vowel"]     { --main: var(--vowel);     --soft: var(--vowel-soft); }
+.app[data-tab="merge"]     { --main: var(--merge);     --soft: var(--merge-soft); }
+
+/* ===== 탭 ===== */
+.tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--white);
+  padding: 6px;
+  border-radius: 22px;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.06);
+}
+
+.tab {
+  flex: 1;
+  min-height: 60px;
+  font-size: 24px;
+  border-radius: 16px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.tab.active {
+  background: var(--main);
+  color: var(--white);
+}
+
+/* ===== 카드 놓이는 자리 ===== */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  perspective: 1200px; /* 뒤집힐 때 입체감 */
+}
+
+.card {
+  flex: 1;
+  width: 100%;
+  border-radius: 32px;
+  position: relative;
+}
+
+.card[hidden] { display: none; }
+
+/* ----- 뒤집히는 카드 ----- */
+.card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.card.flipped .card-inner { transform: rotateY(180deg); }
+.card.no-anim .card-inner { transition: none; }
+
+.face {
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.08);
+}
+
+.front {
+  background: var(--white);
+  border: 6px solid var(--main);
+}
+
+.back {
+  background: var(--soft);
+  border: 6px solid var(--main);
+  transform: rotateY(180deg);
+}
+
+.big-letter {
+  font-size: min(58vw, 34dvh, 280px);
+  line-height: 1;
+  color: var(--main);
+}
+
+.hint {
+  font-size: 20px;
+  opacity: 0.55;
+}
+
+.emoji {
+  font-size: min(32vw, 18dvh, 150px);
+  line-height: 1.1;
+}
+
+.letter-name {
+  font-size: min(9vw, 40px);
+  background: var(--white);
+  color: var(--main);
+  padding: 4px 22px;
+  border-radius: 999px;
+}
+
+.word {
+  font-size: min(15vw, 9dvh, 72px);
+  line-height: 1.2;
+}
+
+.word .first {
+  color: var(--main);
+}
+
+.note {
+  font-size: 17px;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.note:empty { display: none; }
+
+/* ----- 합치기 카드 ----- */
+.merge {
+  background: var(--white);
+  border: 6px solid var(--merge);
+  box-shadow: 0 8px 0 rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px;
+}
+
+.merge-letters {
+  position: relative;
+  flex: 1.2;
+}
+
+.piece {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  font-size: min(30vw, 20dvh, 150px);
+  /* 미끄러지는 움직임 */
+  transition: left 0.6s cubic-bezier(0.5, 0, 0.3, 1),
+              opacity 0.25s ease 0s,
+              transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.piece.c    { left: 20%; color: var(--consonant); }
+.piece.plus { left: 50%; font-size: min(14vw, 9dvh, 64px); opacity: 0.4; }
+.piece.v    { left: 80%; color: var(--vowel); }
+
+.piece.result {
+  left: 50%;
+  color: var(--merge);
+  font-size: min(48vw, 28dvh, 230px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+}
+
+.merge-word {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.merge-word .emoji { font-size: min(24vw, 13dvh, 110px); }
+.merge-word .word .first { color: var(--merge); }
+
+.merge > .hint {
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+/* 합쳐진 상태 */
+.merge.merged .piece.c,
+.merge.merged .piece.v {
+  left: 50%;
+  opacity: 0;
+  transition: left 0.6s cubic-bezier(0.5, 0, 0.3, 1),
+              opacity 0.2s ease 0.5s;
+}
+
+.merge.merged .piece.plus {
+  opacity: 0;
+}
+
+.merge.merged .piece.result {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  transition: opacity 0.2s ease 0.55s,
+              transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s;
+}
+
+.merge.merged .merge-word {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 1.1s;
+}
+
+.merge.merged > .hint { opacity: 0; }
+
+/* 다른 카드로 넘길 때는 움직임 없이 바로 바꾸기 */
+.merge.no-anim *,
+.merge.no-anim { transition: none !important; }
+
+/* ===== 카드 번호 ===== */
+.counter {
+  text-align: center;
+  font-size: 22px;
+  opacity: 0.6;
+}
+
+/* ===== 이전 / 다음 버튼 ===== */
+.nav-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-btn {
+  flex: 1;
+  min-height: 72px;
+  font-size: 28px;
+  border-radius: 22px;
+  background: var(--main);
+  color: var(--white);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.nav-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+}
